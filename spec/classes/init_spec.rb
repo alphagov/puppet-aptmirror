@@ -1,31 +1,44 @@
 require 'spec_helper'
 
 describe 'aptmirror' do
-  context 'supported operating systems' do
-    ['Debian', 'RedHat'].each do |osfamily|
-      describe "aptmirror class without any parameters on #{osfamily}" do
-        let(:params) {{ }}
-        let(:facts) {{
-          :osfamily => osfamily,
-        }}
-
-        it { should include_class('aptmirror::params') }
-
-        it { should contain_class('aptmirror::install') }
-        it { should contain_class('aptmirror::config') }
-        it { should contain_class('aptmirror::service') }
-      end
-    end
+  context 'single repository' do
+    let(:params) {{
+        :servers => {
+          'http://archive.ubuntu.com/ubuntu' =>
+          { 'precise' => ['main','restricted'] }
+        }
+      }}
+    it { should contain_file('/etc/apt/mirror.list').
+      with_content(%r{^deb http://archive.ubuntu.com/ubuntu precise main restricted$}).
+      with_content(%r{^clean http://archive.ubuntu.com/ubuntu$})}
   end
 
-  context 'unsupported operating system' do
-    describe 'aptmirror class without any parameters on Solaris/Nexenta' do
-      let(:facts) {{
-        :osfamily        => 'Solaris',
-        :operatingsystem => 'Nexenta',
+  context 'multiple repos' do
+    let(:params) {{
+        :servers => {
+          'http://ftp.uk.debian.org/debian' =>
+          {'stable' => ['main','contrib']},
+          'http://security.debian.org/' =>
+          {'wheezy/updates' => ['main','contrib']},
+        }
       }}
+    it { should contain_file('/etc/apt/mirror.list').
+      with_content(%r{^deb http://ftp.uk.debian.org/debian stable main contrib$}).
+      with_content(%r{^deb http://security.debian.org/ wheezy/updates main contrib$}).
+      with_content(%r{^clean http://ftp.uk.debian.org/debian$}).
+      with_content(%r{^clean http://security.debian.org/$})}
+  end
 
-      it { expect { should }.to raise_error(Puppet::Error, /Nexenta not supported/) }
-    end
+  context 'multiple distros' do
+    let(:params) {{
+        :servers => {
+          'http://archive.ubuntu.com/ubuntu' =>
+          { 'precise'         => ['main','restricted'],
+            'precise-updates' => ['main','restricted']}
+        }
+      }}
+    it { should contain_file('/etc/apt/mirror.list').
+      with_content(%r{^deb http://archive.ubuntu.com/ubuntu precise main restricted$}).
+      with_content(%r{^deb http://archive.ubuntu.com/ubuntu precise-updates main restricted$})}
   end
 end

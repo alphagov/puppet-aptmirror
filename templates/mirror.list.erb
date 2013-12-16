@@ -1,0 +1,12 @@
+set nthreads     20
+set _tilde 0
+
+<%- @servers.each do |server,distros| -%>
+ <%- distros.each do |distro,components| -%>
+deb <%= server %> <%= distro %> <%= components.join(' ') %>
+ <%- end -%>
+<%- end -%>
+
+<%- @servers.each do |server,distros| -%>
+clean <%= server %>
+<%- end -%>

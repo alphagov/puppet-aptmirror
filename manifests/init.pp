@@ -1,24 +1,35 @@
 # == Class: aptmirror
 #
-# Full description of class aptmirror here.
+# Manage apt mirrors using apt-mirror.
 #
 # === Parameters
 #
-# [*sample_parameter*]
-#   Explanation of what this parameter affects and what it defaults to.
+# [*servers*]
+#   A hash of servers and distributions and components to fetch from
+#   each. Example:
+#      {
+#        "http://example.com/ubuntu": {
+#          "precise": ["main", "universe"],
+#          "precise-updates": ["main"]
+#        },
+#        "http://example.org/debian": { "sid": ["main"] }
+#      }
 #
 class aptmirror (
-) inherits aptmirror::params {
+  $servers = {}
+) {
 
   # validate parameters here
 
-  anchor { 'aptmirror::begin': } ->
-  class { 'aptmirror::install': } ->
-  class { 'aptmirror::config': }
-  class { 'aptmirror::service': } ->
-  anchor { 'aptmirror::end': }
+  package {'apt-mirror':
+    ensure => installed
+  }
 
-  Anchor['aptmirror::begin']  ~> Class['aptmirror::service']
-  Class['aptmirror::install'] ~> Class['aptmirror::service']
-  Class['aptmirror::config']  ~> Class['aptmirror::service']
+  file {'/etc/apt/mirror.list':
+    content => template('aptmirror/mirror.list.erb')
+  }
+
+  file {'/etc/cron.d/apt-mirror':
+    source => 'puppet:///modules/aptmirror/apt-mirror.cron'
+  }
 }
