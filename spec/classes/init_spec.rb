@@ -41,4 +41,11 @@ describe 'aptmirror' do
       with_content(%r{^deb http://archive.ubuntu.com/ubuntu precise main restricted$}).
       with_content(%r{^deb http://archive.ubuntu.com/ubuntu precise-updates main restricted$})}
   end
+
+  context 'invalid input' do
+    let(:params) {{
+        :servers => "Not a hash",
+      }}
+    it { expect { should }.to raise_error(Puppet::Error, /not a Hash..*It looks to be a String/) }
+  end
 end

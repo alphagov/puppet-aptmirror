@@ -19,7 +19,7 @@ class aptmirror (
   $servers = {}
 ) {
 
-  # validate parameters here
+  validate_hash($servers)
 
   package {'apt-mirror':
     ensure => installed
